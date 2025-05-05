@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { Moon, Sun, DollarSign, Bell, Globe, Shield, Github as GitHubIcon, HelpCircle, Heart } from 'lucide-react-native';
+import { Moon, Sun, DollarSign, Bell, Globe, Shield, Github, HelpCircle, Heart, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useOnboarding } from '@/hooks/useOnboarding';
+import { router } from 'expo-router';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -14,6 +16,7 @@ const CURRENCIES = [
 
 export default function SettingsScreen() {
   const { theme, toggleTheme, colors, currency, setCurrency } = useTheme();
+  const { resetOnboarding } = useOnboarding();
   const isDark = theme === 'dark';
 
   const handleToggleTheme = () => {
@@ -28,6 +31,40 @@ export default function SettingsScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setCurrency(currencyCode as 'USD' | 'EUR' | 'GBP' | 'JPY' | 'AUD');
+  };
+
+  const handleResetOnboarding = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    Alert.alert(
+      "Reset Onboarding",
+      "This will reset the onboarding screens. You'll need to restart the app to see them. Continue?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            await resetOnboarding();
+            Alert.alert(
+              "Onboarding Reset",
+              "Onboarding has been reset. Restart the app to see the onboarding screens.",
+              [
+                {
+                  text: "OK",
+                  onPress: () => router.replace('/splash')
+                }
+              ]
+            );
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -134,7 +171,7 @@ export default function SettingsScreen() {
           <TouchableOpacity style={styles.settingItem}>
             <View style={styles.settingRow}>
               <View style={styles.iconContainer}>
-                <GitHubIcon color={colors.primary} size={22} />
+                <Github color={colors.primary} size={22} />
               </View>
               <Text style={[styles.settingText, { color: colors.text }]}>
                 GitHub Repository
@@ -158,6 +195,25 @@ export default function SettingsScreen() {
               </View>
               <Text style={[styles.settingText, { color: colors.text }]}>
                 Help & Support
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Developer Options
+          </Text>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={handleResetOnboarding}
+          >
+            <View style={styles.settingRow}>
+              <View style={styles.iconContainer}>
+                <RefreshCw color={colors.primary} size={22} />
+              </View>
+              <Text style={[styles.settingText, { color: colors.text }]}>
+                Reset Onboarding
               </Text>
             </View>
           </TouchableOpacity>
