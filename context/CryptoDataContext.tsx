@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { fetchCryptoData, fetchMarketStats } from '@/utils/api';
 import { useTheme } from '@/hooks/useTheme';
+import { initializeSymbolMapping } from '@/utils/hyperliquidUtils';
 
 export interface CryptoCurrency {
   id: string;
@@ -123,6 +124,11 @@ export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
   // Fetch data initially and when currency changes
   useEffect(() => {
     fetchData();
+
+    // Initialize the symbol mapping for Hyperliquid
+    initializeSymbolMapping().catch(err => {
+      console.error('Failed to initialize symbol mapping:', err);
+    });
 
     // Set up a timer to refresh data every 60 seconds
     const intervalId = setInterval(fetchData, 60000); // 60 seconds

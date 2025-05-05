@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Modal, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
   TouchableWithoutFeedback,
   TextInput,
-  Platform
+  Platform,
+  Keyboard,
+  ScrollView
 } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import * as Haptics from 'expo-haptics';
 import { X, Check } from 'lucide-react-native';
+import { CURRENCY_SYMBOLS } from '@/utils/currencyUtils';
 
 interface FilterModalProps {
   visible: boolean;
@@ -26,13 +29,13 @@ interface FilterModalProps {
   onApply: (filters: FilterModalProps['filters']) => void;
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ 
-  visible, 
-  onClose, 
-  filters, 
-  onApply 
+const FilterModal: React.FC<FilterModalProps> = ({
+  visible,
+  onClose,
+  filters,
+  onApply
 }) => {
-  const { colors } = useTheme();
+  const { colors, currency } = useTheme();
   const [localFilters, setLocalFilters] = useState(filters);
 
   const handleSortByChange = (sortBy: FilterModalProps['filters']['sortBy']) => {
@@ -76,206 +79,228 @@ const FilterModal: React.FC<FilterModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback onPress={() => {
+        Keyboard.dismiss();
+        onClose();
+      }}>
         <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={[styles.container, { backgroundColor: colors.card }]}>
               <View style={styles.header}>
                 <Text style={[styles.title, { color: colors.text }]}>
                   Filter & Sort
                 </Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    onClose();
+                  }}
+                  style={styles.closeButton}
+                >
                   <X color={colors.text} size={24} />
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Price Range
-                </Text>
-                <View style={styles.row}>
-                  <View style={styles.inputContainer}>
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                      Min ($)
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        { 
-                          backgroundColor: colors.inputBackground,
-                          color: colors.text,
-                        }
-                      ]}
-                      value={localFilters.minPrice}
-                      onChangeText={(text) => setLocalFilters({ ...localFilters, minPrice: text })}
-                      keyboardType="numeric"
-                      placeholder="Min"
-                      placeholderTextColor={colors.textSecondary}
-                    />
-                  </View>
-                  <View style={styles.inputContainer}>
-                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                      Max ($)
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        { 
-                          backgroundColor: colors.inputBackground,
-                          color: colors.text,
-                        }
-                      ]}
-                      value={localFilters.maxPrice}
-                      onChangeText={(text) => setLocalFilters({ ...localFilters, maxPrice: text })}
-                      keyboardType="numeric"
-                      placeholder="Max"
-                      placeholderTextColor={colors.textSecondary}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Market Cap
-                </Text>
-                <View style={styles.inputContainer}>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Min (in millions $)
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Price Range
                   </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      { 
-                        backgroundColor: colors.inputBackground,
-                        color: colors.text,
-                      }
-                    ]}
-                    value={localFilters.minMarketCap}
-                    onChangeText={(text) => setLocalFilters({ ...localFilters, minMarketCap: text })}
-                    keyboardType="numeric"
-                    placeholder="Min market cap"
-                    placeholderTextColor={colors.textSecondary}
-                  />
+                  <View style={styles.row}>
+                    <View style={styles.inputContainer}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                        Min ({CURRENCY_SYMBOLS[currency]})
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: colors.inputBackground,
+                            color: colors.text,
+                          }
+                        ]}
+                        value={localFilters.minPrice}
+                        onChangeText={(text) => setLocalFilters({ ...localFilters, minPrice: text })}
+                        keyboardType="numeric"
+                        placeholder="Min"
+                        placeholderTextColor={colors.textSecondary}
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
+                      />
+                    </View>
+                    <View style={styles.inputContainer}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                        Max ({CURRENCY_SYMBOLS[currency]})
+                      </Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: colors.inputBackground,
+                            color: colors.text,
+                          }
+                        ]}
+                        value={localFilters.maxPrice}
+                        onChangeText={(text) => setLocalFilters({ ...localFilters, maxPrice: text })}
+                        keyboardType="numeric"
+                        placeholder="Max"
+                        placeholderTextColor={colors.textSecondary}
+                        returnKeyType="done"
+                        onSubmitEditing={Keyboard.dismiss}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Sort By
-                </Text>
-                <View style={styles.optionsContainer}>
-                  {[
-                    { value: 'market_cap', label: 'Market Cap' },
-                    { value: 'price', label: 'Price' },
-                    { value: 'name', label: 'Name' },
-                    { value: 'price_change_24h', label: '24h Change' },
-                  ].map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Market Cap
+                  </Text>
+                  <View style={styles.inputContainer}>
+                    <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                      Min (in millions {CURRENCY_SYMBOLS[currency]})
+                    </Text>
+                    <TextInput
                       style={[
-                        styles.option,
-                        localFilters.sortBy === option.value && { 
-                          backgroundColor: colors.primaryLight,
-                          borderColor: colors.primary,
+                        styles.input,
+                        {
+                          backgroundColor: colors.inputBackground,
+                          color: colors.text,
                         }
                       ]}
-                      onPress={() => handleSortByChange(option.value as any)}
+                      value={localFilters.minMarketCap}
+                      onChangeText={(text) => setLocalFilters({ ...localFilters, minMarketCap: text })}
+                      keyboardType="numeric"
+                      placeholder="Min market cap"
+                      placeholderTextColor={colors.textSecondary}
+                      returnKeyType="done"
+                      onSubmitEditing={Keyboard.dismiss}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Sort By
+                  </Text>
+                  <View style={styles.optionsContainer}>
+                    {[
+                      { value: 'market_cap', label: 'Market Cap' },
+                      { value: 'price', label: 'Price' },
+                      { value: 'name', label: 'Name' },
+                      { value: 'price_change_24h', label: '24h Change' },
+                    ].map((option) => (
+                      <View key={option.value} style={{ width: '48%' }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.option,
+                            localFilters.sortBy === option.value && {
+                              backgroundColor: colors.primaryLight,
+                              borderColor: colors.primary,
+                            }
+                          ]}
+                          onPress={() => handleSortByChange(option.value as any)}
+                        >
+                          <Text
+                            style={[
+                              styles.optionText,
+                              { color: localFilters.sortBy === option.value ? colors.primary : colors.text }
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {option.label}
+                          </Text>
+                          {localFilters.sortBy === option.value && (
+                            <Check color={colors.primary} size={16} />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    Direction
+                  </Text>
+                  <View style={styles.directionContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.directionButton,
+                        {
+                          backgroundColor: localFilters.sortDirection === 'desc'
+                            ? colors.primaryLight
+                            : colors.inputBackground,
+                          borderTopLeftRadius: 8,
+                          borderBottomLeftRadius: 8,
+                        }
+                      ]}
+                      onPress={() => handleSortDirectionChange('desc')}
                     >
                       <Text
                         style={[
-                          styles.optionText,
-                          { color: localFilters.sortBy === option.value ? colors.primary : colors.text }
+                          styles.directionText,
+                          {
+                            color: localFilters.sortDirection === 'desc'
+                              ? colors.primary
+                              : colors.textSecondary
+                          }
                         ]}
                       >
-                        {option.label}
+                        Descending
                       </Text>
-                      {localFilters.sortBy === option.value && (
-                        <Check color={colors.primary} size={16} />
-                      )}
                     </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Direction
-                </Text>
-                <View style={styles.directionContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.directionButton,
-                      { 
-                        backgroundColor: localFilters.sortDirection === 'desc' 
-                          ? colors.primaryLight 
-                          : colors.inputBackground,
-                        borderTopLeftRadius: 8,
-                        borderBottomLeftRadius: 8,
-                      }
-                    ]}
-                    onPress={() => handleSortDirectionChange('desc')}
-                  >
-                    <Text
+                    <TouchableOpacity
                       style={[
-                        styles.directionText,
-                        { 
-                          color: localFilters.sortDirection === 'desc' 
-                            ? colors.primary 
-                            : colors.textSecondary 
+                        styles.directionButton,
+                        {
+                          backgroundColor: localFilters.sortDirection === 'asc'
+                            ? colors.primaryLight
+                            : colors.inputBackground,
+                          borderTopRightRadius: 8,
+                          borderBottomRightRadius: 8,
                         }
                       ]}
+                      onPress={() => handleSortDirectionChange('asc')}
                     >
-                      Descending
+                      <Text
+                        style={[
+                          styles.directionText,
+                          {
+                            color: localFilters.sortDirection === 'asc'
+                              ? colors.primary
+                              : colors.textSecondary
+                          }
+                        ]}
+                      >
+                        Ascending
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={[styles.resetButton, { borderColor: colors.primary }]}
+                    onPress={handleReset}
+                  >
+                    <Text style={[styles.resetButtonText, { color: colors.primary }]}>
+                      Reset
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.directionButton,
-                      { 
-                        backgroundColor: localFilters.sortDirection === 'asc' 
-                          ? colors.primaryLight 
-                          : colors.inputBackground,
-                        borderTopRightRadius: 8,
-                        borderBottomRightRadius: 8,
-                      }
-                    ]}
-                    onPress={() => handleSortDirectionChange('asc')}
+                    style={[styles.applyButton, { backgroundColor: colors.primary }]}
+                    onPress={handleApply}
                   >
-                    <Text
-                      style={[
-                        styles.directionText,
-                        { 
-                          color: localFilters.sortDirection === 'asc' 
-                            ? colors.primary 
-                            : colors.textSecondary 
-                        }
-                      ]}
-                    >
-                      Ascending
+                    <Text style={[styles.applyButtonText, { color: colors.cardText }]}>
+                      Apply Filters
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.resetButton, { borderColor: colors.primary }]}
-                  onPress={handleReset}
-                >
-                  <Text style={[styles.resetButtonText, { color: colors.primary }]}>
-                    Reset
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.applyButton, { backgroundColor: colors.primary }]}
-                  onPress={handleApply}
-                >
-                  <Text style={[styles.applyButtonText, { color: colors.cardText }]}>
-                    Apply Filters
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              </ScrollView>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -341,22 +366,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -4,
+    justifyContent: 'space-between',
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'transparent',
     margin: 4,
+    width: '100%',
   },
   optionText: {
     fontSize: 14,
     fontFamily: 'Inter_500Medium',
     marginRight: 4,
+    flexShrink: 1,
   },
   directionContainer: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Platform, Alert, Linking } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
-import { Moon, Sun, DollarSign, Bell, Globe, Shield, Github, HelpCircle, Heart, RefreshCw } from 'lucide-react-native';
+import { Moon, Sun, DollarSign, Bell, Globe, Shield, Code, Heart, RefreshCw, Mail } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { router } from 'expo-router';
@@ -134,7 +134,7 @@ export default function SettingsScreen() {
           ))}
         </View>
 
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
+        {/* <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             Notifications
           </Text>
@@ -153,13 +153,16 @@ export default function SettingsScreen() {
               thumbColor={colors.textSecondary}
             />
           </View>
-        </View>
+        </View> */}
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
             About
           </Text>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => Linking.openURL('https://anshik1998.github.io')}
+          >
             <View style={styles.settingRow}>
               <View style={styles.iconContainer}>
                 <Globe color={colors.primary} size={22} />
@@ -169,17 +172,32 @@ export default function SettingsScreen() {
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => Linking.openURL('https://github.com/anshik1998/crypto-watch')}
+          >
             <View style={styles.settingRow}>
               <View style={styles.iconContainer}>
-                <Github color={colors.primary} size={22} />
+                <Code color={colors.primary} size={22} />
               </View>
               <Text style={[styles.settingText, { color: colors.text }]}>
                 GitHub Repository
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => {
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              Alert.alert(
+                "Privacy Policy",
+                "We don't collect any data. We're just here to have fun and help you track crypto prices! 🚀",
+                [{ text: "Cool!" }]
+              );
+            }}
+          >
             <View style={styles.settingRow}>
               <View style={styles.iconContainer}>
                 <Shield color={colors.primary} size={22} />
@@ -189,10 +207,13 @@ export default function SettingsScreen() {
               </Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => Linking.openURL('mailto:anshik1998@gmail.com')}
+          >
             <View style={styles.settingRow}>
               <View style={styles.iconContainer}>
-                <HelpCircle color={colors.primary} size={22} />
+                <Mail color={colors.primary} size={22} />
               </View>
               <Text style={[styles.settingText, { color: colors.text }]}>
                 Help & Support
@@ -225,11 +246,19 @@ export default function SettingsScreen() {
             CryptoWatch v1.0.0
           </Text>
           <View style={styles.footerRow}>
-            <Heart color={colors.error} size={14} style={{ marginRight: 4 }} />
             <Text style={[styles.footerText, { color: colors.textSecondary }]}>
               Made with React Native & Expo
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://anshik1998.github.io')}
+            style={styles.footerRow}
+          >
+
+            <Text style={[styles.footerText, { color: colors.text }]}>
+              Crafted with ❤️ by Anshik Bansal
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -323,6 +352,6 @@ const styles = StyleSheet.create({
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
 });

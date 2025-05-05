@@ -13,7 +13,8 @@ import {
   getCachedOrderBook,
   isRateLimitError
 } from './cache';
-import { COINGECKO_API_KEY, COINGECKO_API_URL, HYPERLIQUID_API_URL } from '@env';
+import { COINGECKO_API_KEY, COINGECKO_API_URL } from '@env';
+import { API_HYPERLIQUID_URL, getHyperliquidSymbol } from './hyperliquidUtils';
 
 // CoinGecko API configuration
 const COINGECKO_CONFIG = {
@@ -354,23 +355,7 @@ export const fetchPriceHistory = async (id: string, currency: string = 'usd') =>
   }
 };
 
-// Hyperliquid API base URL - using environment variable
-const API_HYPERLIQUID_URL = HYPERLIQUID_API_URL || 'https://api.hyperliquid.xyz';
-
-// Map CoinGecko IDs to Hyperliquid coin symbols
-const coinGeckoToHyperliquidMap: Record<string, string> = {
-  'bitcoin': 'BTC',
-  'ethereum': 'ETH',
-  'solana': 'SOL',
-  'arbitrum': 'ARB',
-  'avalanche-2': 'AVAX',
-  'binancecoin': 'BNB',
-  'cardano': 'ADA',
-  'dogecoin': 'DOGE',
-  'polkadot': 'DOT',
-  'ripple': 'XRP',
-  // Add more mappings as needed
-};
+// Hyperliquid API functions and constants are now imported from hyperliquidUtils.ts
 
 // Fetch order book from Hyperliquid API
 export const fetchOrderBook = async (id: string) => {
@@ -383,7 +368,7 @@ export const fetchOrderBook = async (id: string) => {
     }
 
     // Get the Hyperliquid symbol for this coin
-    const symbol = coinGeckoToHyperliquidMap[id] || 'BTC'; // Default to BTC if not found
+    const symbol = await getHyperliquidSymbol(id);
 
     // Fetch the L2 order book data from Hyperliquid
     const response = await axios.post(`${API_HYPERLIQUID_URL}/info`, {

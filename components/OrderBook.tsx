@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { CURRENCY_SYMBOLS } from '@/utils/currencyUtils';
+import { CurrencyType } from '@/context/ThemeContext';
+import { convertOrderBookPrices } from '@/utils/hyperliquidUtils';
 
 interface OrderBookEntry {
   price: number;
@@ -31,7 +34,25 @@ const OrderBook: React.FC<OrderBookProps> = ({ data }) => {
     );
   }
 
-  const { bids, asks } = data;
+  // Convert order book prices to the user's selected currency
+  const convertedData = useMemo(() => {
+    return convertOrderBookPrices(data, currency as CurrencyType);
+  }, [data, currency]);
+
+  if (!convertedData) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.card }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Order Book
+        </Text>
+        <Text style={[styles.placeholder, { color: colors.textSecondary }]}>
+          Error loading order book data
+        </Text>
+      </View>
+    );
+  }
+
+  const { bids, asks } = convertedData;
 
   // Calculate maximum volume for visualization
   const maxVolume = Math.max(
@@ -40,7 +61,7 @@ const OrderBook: React.FC<OrderBookProps> = ({ data }) => {
   );
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[styles.container, { backgroundColor: colors.card }]}
       entering={FadeIn.duration(500)}
     >
@@ -64,31 +85,31 @@ const OrderBook: React.FC<OrderBookProps> = ({ data }) => {
         {/* Ask orders (sell) - displayed in reverse order */}
         {asks.slice(0, 5).map((ask, index) => (
           <View key={`ask-${index}`} style={styles.orderRow}>
-            <View 
+            <View
               style={[
-                styles.volumeBar, 
+                styles.volumeBar,
                 {
                   backgroundColor: `${colors.error}30`,
                   width: `${(ask.amount / maxVolume) * 100}%`,
                   right: 0,
                 }
-              ]} 
+              ]}
             />
             <Text style={[styles.priceText, { color: colors.error }]}>
-              {ask.price.toFixed(2)}
+              {CURRENCY_SYMBOLS[currency as CurrencyType]}{ask.price.toFixed(2)}
             </Text>
             <Text style={[styles.amountText, { color: colors.text }]}>
               {ask.amount.toFixed(4)}
             </Text>
             <Text style={[styles.totalText, { color: colors.textSecondary }]}>
-              {(ask.price * ask.amount).toFixed(2)}
+              {CURRENCY_SYMBOLS[currency as CurrencyType]}{(ask.price * ask.amount).toFixed(2)}
             </Text>
           </View>
         ))}
 
         <View style={[styles.spreadRow, { borderColor: colors.border }]}>
           <Text style={[styles.spreadText, { color: colors.primary }]}>
-            Spread: {((asks[0]?.price || 0) - (bids[0]?.price || 0)).toFixed(2)} ({
+            Spread: {CURRENCY_SYMBOLS[currency as CurrencyType]}{((asks[0]?.price || 0) - (bids[0]?.price || 0)).toFixed(2)} ({
               (((asks[0]?.price || 0) - (bids[0]?.price || 0)) / (asks[0]?.price || 1) * 100).toFixed(2)
             }%)
           </Text>
@@ -97,24 +118,24 @@ const OrderBook: React.FC<OrderBookProps> = ({ data }) => {
         {/* Bid orders (buy) */}
         {bids.slice(0, 5).map((bid, index) => (
           <View key={`bid-${index}`} style={styles.orderRow}>
-            <View 
+            <View
               style={[
-                styles.volumeBar, 
+                styles.volumeBar,
                 {
                   backgroundColor: `${colors.success}30`,
                   width: `${(bid.amount / maxVolume) * 100}%`,
                   left: 0,
                 }
-              ]} 
+              ]}
             />
             <Text style={[styles.priceText, { color: colors.success }]}>
-              {bid.price.toFixed(2)}
+              {CURRENCY_SYMBOLS[currency as CurrencyType]}{bid.price.toFixed(2)}
             </Text>
             <Text style={[styles.amountText, { color: colors.text }]}>
               {bid.amount.toFixed(4)}
             </Text>
             <Text style={[styles.totalText, { color: colors.textSecondary }]}>
-              {(bid.price * bid.amount).toFixed(2)}
+              {CURRENCY_SYMBOLS[currency as CurrencyType]}{(bid.price * bid.amount).toFixed(2)}
             </Text>
           </View>
         ))}

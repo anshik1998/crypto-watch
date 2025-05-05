@@ -3,7 +3,11 @@ import { useCryptoData } from './useCryptoData';
 import { useTheme } from './useTheme';
 import { fetchCryptoDetail, fetchPriceHistory, fetchOrderBook } from '@/utils/api';
 import { CryptoCurrency } from '@/context/CryptoDataContext';
-import { HYPERLIQUID_API_URL } from '@env';
+import {
+  getHyperliquidSymbol,
+  getHyperliquidWebSocketUrl,
+  createHyperliquidSubscriptionMessage
+} from '@/utils/hyperliquidUtils';
 
 interface OrderBookEntry {
   price: number;
@@ -108,29 +112,20 @@ export const useCryptoDetail = (id: string | undefined) => {
       }
     };
 
-    const setupWebSocket = () => {
+    const setupWebSocket = async () => {
       if (!id) return;
 
-      // Get the Hyperliquid symbol for this coin
-      const coinGeckoToHyperliquidMap: Record<string, string> = {
-        'bitcoin': 'BTC',
-        'ethereum': 'ETH',
-        'solana': 'SOL',
-        // Add more mappings as needed
-      };
-
-      const symbol = coinGeckoToHyperliquidMap[id] || 'BTC'; // Default to BTC if not found
-
       try {
+        // Import the mapping from the API utils
+        const symbol = await getHyperliquidSymbol(id);
+
         // Close any existing connection
         if (wsConnection) {
           wsConnection.close();
         }
 
         // Connect to Hyperliquid WebSocket API
-        const wsUrl = HYPERLIQUID_API_URL ?
-          `wss://${HYPERLIQUID_API_URL.replace('https://', '')}/ws` :
-          'wss://api.hyperliquid.xyz/ws';
+        const wsUrl = getHyperliquidWebSocketUrl();
         wsConnection = new WebSocket(wsUrl);
 
         wsConnection.onopen = () => {
@@ -138,15 +133,9 @@ export const useCryptoDetail = (id: string | undefined) => {
 
           // Subscribe to L2 order book updates
           if (wsConnection) {
-            // Use the correct message format for Hyperliquid WebSocket API
-            // Based on Hyperliquid docs: https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/websocket/subscriptions
-            wsConnection.send(JSON.stringify({
-              "method": "subscribe",
-              "subscription": {
-                "type": "l2Book",
-                "coin": symbol
-              }
-            }));
+            // Use the utility function to create the subscription message
+            const subscriptionMessage = createHyperliquidSubscriptionMessage(symbol);
+            wsConnection.send(JSON.stringify(subscriptionMessage));
 
             // Log the subscription
             console.log(`Subscribed to L2 order book for ${symbol}`);
@@ -224,7 +213,15 @@ export const useCryptoDetail = (id: string | undefined) => {
 
     // Try to set up WebSocket for real-time order book updates if enabled
     if (useWebSocket) {
-      setupWebSocket();
+      // We need to use an IIFE (Immediately Invoked Function Expression)
+      // to handle the async setupWebSocket function
+      (async () => {
+        try {
+          await setupWebSocket();
+        } catch (error) {
+          console.error('Error setting up WebSocket:', error);
+        }
+      })();
     }
 
     // Set up interval to refresh order book data
@@ -237,6 +234,7 @@ export const useCryptoDetail = (id: string | undefined) => {
       }
 
       try {
+        // Fetch the order book with the latest symbol mapping
         const book = await fetchOrderBook(id);
         setOrderBook(book);
       } catch (err) {
