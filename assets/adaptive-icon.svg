@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Transparent Background -->
+  <rect width="1024" height="1024" fill="none"/>
+  
+  <!-- Cryptocurrency Symbol (Stylized C for CryptoWatch) -->
+  <path d="M672 352C672 352 582 272 462 272C342 272 252 362 252 482C252 602 342 692 462 692C582 692 672 612 672 612" 
+        stroke="#3B82F6" stroke-width="48" stroke-linecap="round"/>
+  
+  <!-- Chart Line -->
+  <path d="M312 542L412 442L512 542L612 392L712 492" 
+        stroke="#4ADE80" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Small Dots representing data points -->
+  <circle cx="312" cy="542" r="12" fill="#3B82F6"/>
+  <circle cx="412" cy="442" r="12" fill="#3B82F6"/>
+  <circle cx="512" cy="542" r="12" fill="#3B82F6"/>
+  <circle cx="612" cy="392" r="12" fill="#3B82F6"/>
+  <circle cx="712" cy="492" r="12" fill="#3B82F6"/>
+</svg>

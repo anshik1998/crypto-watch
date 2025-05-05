@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "1",
-    "slug": "1",
+    "name": "CryptoWatch",
+    "slug": "cryptowatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "scheme": "cryptowatch",
     "splash": {
@@ -14,13 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anshik1998.cryptowatch"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.anshik1998.cryptowatch",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -28,6 +30,8 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "description": "A comprehensive cryptocurrency tracking app with real-time data, price charts, and order books.",
+    "githubUrl": "https://github.com/anshik1998/crypto-watch"
   }
 }

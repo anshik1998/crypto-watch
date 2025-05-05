@@ -1,6 +1,8 @@
 # CryptoWatch
 
-![CryptoWatch Logo](assets/images/icon.png)
+<div align="center">
+  <img src="assets/icon.png" alt="CryptoWatch Logo" width="120" height="120" />
+</div>
 
 A comprehensive React Native mobile application for tracking cryptocurrency market data in real-time. CryptoWatch provides users with detailed information about cryptocurrencies, including price charts, order books, and market statistics.
 
