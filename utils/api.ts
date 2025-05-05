@@ -51,20 +51,24 @@ const createEmptyOrderBook = () => {
   };
 };
 
-const createEmptyPriceHistory = () => {
+const createEmptyPriceHistory = (currency: string = 'usd') => {
   return {
     '1d': [],
     '7d': [],
-    '30d': []
+    '30d': [],
+    'currency': currency.toLowerCase()
   };
 };
 
 // Fetch top cryptocurrencies
-export const fetchCryptoData = async (): Promise<CryptoCurrency[]> => {
+export const fetchCryptoData = async (currency: string = 'usd'): Promise<CryptoCurrency[]> => {
   try {
+    // Ensure currency is lowercase for CoinGecko API
+    const vsCurrency = currency.toLowerCase();
+
     const response = await axios.get(`${COINGECKO_CONFIG.BASE_URL}/coins/markets`, {
       params: COINGECKO_CONFIG.getParams({
-        vs_currency: 'usd',
+        vs_currency: vsCurrency,
         order: 'market_cap_desc',
         per_page: 50,
         page: 1,
@@ -101,22 +105,30 @@ export const fetchCryptoData = async (): Promise<CryptoCurrency[]> => {
 };
 
 // Fetch market statistics
-export const fetchMarketStats = async (): Promise<MarketStats> => {
+export const fetchMarketStats = async (currency: string = 'usd'): Promise<MarketStats> => {
   try {
+    // Ensure currency is lowercase for CoinGecko API
+    const vsCurrency = currency.toLowerCase();
+
     const response = await axios.get(`${COINGECKO_CONFIG.BASE_URL}/global`, {
       params: COINGECKO_CONFIG.getParams(),
       headers: COINGECKO_CONFIG.getHeaders(),
     });
     const data = response.data.data;
 
+    // Get values in the requested currency if available, fallback to USD
+    const totalMarketCap = data.total_market_cap[vsCurrency] || data.total_market_cap.usd;
+    const totalVolume = data.total_volume[vsCurrency] || data.total_volume.usd;
+
     const marketStats = {
-      total_market_cap: data.total_market_cap.usd,
-      total_volume: data.total_volume.usd,
+      total_market_cap: totalMarketCap,
+      total_volume: totalVolume,
       market_cap_percentage: {
         btc: data.market_cap_percentage.btc,
         eth: data.market_cap_percentage.eth,
       },
       market_cap_change_percentage_24h_usd: data.market_cap_change_percentage_24h_usd,
+      currency: vsCurrency,
     };
 
     // Cache the successful response
@@ -146,30 +158,45 @@ export const fetchMarketStats = async (): Promise<MarketStats> => {
 };
 
 // Fetch detailed crypto data
-export const fetchCryptoDetail = async (id: string): Promise<CryptoCurrency> => {
+export const fetchCryptoDetail = async (id: string, currency: string = 'usd'): Promise<CryptoCurrency> => {
   try {
+    // Ensure currency is lowercase for CoinGecko API
+    const vsCurrency = currency.toLowerCase();
+
     const response = await axios.get(`${COINGECKO_CONFIG.BASE_URL}/coins/${id}`, {
       params: COINGECKO_CONFIG.getParams(),
       headers: COINGECKO_CONFIG.getHeaders(),
     });
     const marketData = response.data.market_data;
 
+    // Get values in the requested currency if available, fallback to USD
+    const currentPrice = marketData.current_price[vsCurrency] || marketData.current_price.usd;
+    const marketCap = marketData.market_cap[vsCurrency] || marketData.market_cap.usd;
+    const totalVolume = marketData.total_volume[vsCurrency] || marketData.total_volume.usd;
+    const priceChange1h = marketData.price_change_percentage_1h_in_currency?.[vsCurrency] ||
+      marketData.price_change_percentage_1h_in_currency?.usd || 0;
+    const priceChange7d = marketData.price_change_percentage_7d_in_currency?.[vsCurrency] ||
+      marketData.price_change_percentage_7d_in_currency?.usd || 0;
+    const ath = marketData.ath[vsCurrency] || marketData.ath.usd;
+    const athChangePercentage = marketData.ath_change_percentage[vsCurrency] || marketData.ath_change_percentage.usd;
+
     const cryptoDetail = {
       id: response.data.id,
       symbol: response.data.symbol,
       name: response.data.name,
       image: response.data.image.large,
-      current_price: marketData.current_price.usd,
-      market_cap: marketData.market_cap.usd,
+      current_price: currentPrice,
+      market_cap: marketCap,
       market_cap_rank: marketData.market_cap_rank,
-      total_volume: marketData.total_volume.usd,
+      total_volume: totalVolume,
       price_change_percentage_24h: marketData.price_change_percentage_24h,
-      price_change_percentage_1h_in_currency: marketData.price_change_percentage_1h_in_currency?.usd || 0,
-      price_change_percentage_7d_in_currency: marketData.price_change_percentage_7d_in_currency?.usd || 0,
+      price_change_percentage_1h_in_currency: priceChange1h,
+      price_change_percentage_7d_in_currency: priceChange7d,
       circulating_supply: marketData.circulating_supply,
       total_supply: marketData.total_supply,
-      ath: marketData.ath.usd,
-      ath_change_percentage: marketData.ath_change_percentage.usd,
+      ath: ath,
+      ath_change_percentage: athChangePercentage,
+      currency: vsCurrency,
     };
 
     // Cache the successful response
@@ -200,8 +227,11 @@ const formatPriceData = (prices: [number, number][]) => {
 };
 
 // Fetch price history from CoinGecko API
-export const fetchPriceHistory = async (id: string) => {
+export const fetchPriceHistory = async (id: string, currency: string = 'usd') => {
   try {
+    // Ensure currency is lowercase for CoinGecko API
+    const vsCurrency = currency.toLowerCase();
+
     // Check for cached data first
     const cachedPriceHistory = await getCachedPriceHistory(id);
     if (cachedPriceHistory) {
@@ -224,7 +254,7 @@ export const fetchPriceHistory = async (id: string) => {
     // Make a single API call to get all the data
     const response = await axios.get(`${COINGECKO_CONFIG.BASE_URL}/coins/${id}/market_chart/range`, {
       params: COINGECKO_CONFIG.getParams({
-        vs_currency: 'usd',
+        vs_currency: vsCurrency,
         from: thirtyDaysAgo,
         to: now,
       }),
@@ -250,6 +280,7 @@ export const fetchPriceHistory = async (id: string) => {
       '1d': formatPriceData(oneDayData),
       '7d': formatPriceData(sevenDayData),
       '30d': formatPriceData(thirtyDayData),
+      'currency': vsCurrency,
     };
 
     // Cache the successful response
@@ -277,6 +308,9 @@ export const fetchPriceHistory = async (id: string) => {
         yesterday.setDate(yesterday.getDate() - 1);
         const dateString = `${yesterday.getDate()}-${yesterday.getMonth() + 1}-${yesterday.getFullYear()}`;
 
+        // Keep the vsCurrency from the original request
+        const vsCurrency = currency.toLowerCase();
+
         const fallbackResponse = await axios.get(`${COINGECKO_CONFIG.BASE_URL}/coins/${id}/history`, {
           params: COINGECKO_CONFIG.getParams({
             date: dateString,
@@ -287,11 +321,13 @@ export const fetchPriceHistory = async (id: string) => {
         // If successful, create a simplified price history
         if (fallbackResponse.data && fallbackResponse.data.market_data) {
           // The history endpoint returns a single price point, so we'll create a simple array
-          const currentPrice = fallbackResponse.data.market_data.current_price.usd;
+          const currentPrice = fallbackResponse.data.market_data.current_price[vsCurrency] ||
+            fallbackResponse.data.market_data.current_price.usd;
           const simplePriceHistory = {
             '1d': [currentPrice],
             '7d': [currentPrice],
-            '30d': [currentPrice]
+            '30d': [currentPrice],
+            'currency': vsCurrency
           };
 
           // Cache this partial data
@@ -314,7 +350,7 @@ export const fetchPriceHistory = async (id: string) => {
 
     // If we can't get data from API or cache, return empty arrays
     console.log(`No price history data available for ${id}, returning empty data`);
-    return createEmptyPriceHistory();
+    return createEmptyPriceHistory(currency);
   }
 };
 

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { fetchCryptoData, fetchMarketStats } from '@/utils/api';
+import { useTheme } from '@/hooks/useTheme';
 
 export interface CryptoCurrency {
   id: string;
@@ -17,6 +18,7 @@ export interface CryptoCurrency {
   total_supply: number | null;
   ath: number;
   ath_change_percentage: number;
+  currency?: string; // Added to track which currency the data is in
 }
 
 export interface MarketStats {
@@ -27,6 +29,7 @@ export interface MarketStats {
     eth: number;
   };
   market_cap_change_percentage_24h_usd: number;
+  currency?: string; // Added to track which currency the data is in
 }
 
 interface CryptoDataContextType {
@@ -50,6 +53,9 @@ export const CryptoDataContext = createContext<CryptoDataContextType>({
 export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => {
+  // Get the current currency from ThemeContext
+  const { currency } = useTheme();
+
   const [cryptoData, setCryptoData] = useState<CryptoCurrency[] | null>(null);
   const [marketStats, setMarketStats] = useState<MarketStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,9 +71,12 @@ export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
     let marketStatsResult = null;
     let usingCachedData = false;
 
+    // Convert currency to lowercase for API calls
+    const currencyParam = currency.toLowerCase();
+
     try {
-      // Try to fetch crypto data
-      cryptoDataResult = await fetchCryptoData();
+      // Try to fetch crypto data with the current currency
+      cryptoDataResult = await fetchCryptoData(currencyParam);
     } catch (err: any) {
       console.error('Error fetching crypto data:', err);
 
@@ -79,8 +88,8 @@ export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // Try to fetch market stats
-      marketStatsResult = await fetchMarketStats();
+      // Try to fetch market stats with the current currency
+      marketStatsResult = await fetchMarketStats(currencyParam);
     } catch (err: any) {
       console.error('Error fetching market stats:', err);
 
@@ -111,6 +120,7 @@ export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
     setLoading(false);
   };
 
+  // Fetch data initially and when currency changes
   useEffect(() => {
     fetchData();
 
@@ -118,7 +128,7 @@ export const CryptoDataProvider: React.FC<{ children: React.ReactNode }> = ({
     const intervalId = setInterval(fetchData, 60000); // 60 seconds
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [currency]); // Re-fetch when currency changes
 
   const contextValue: CryptoDataContextType = {
     cryptoData,

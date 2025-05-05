@@ -12,6 +12,7 @@ const CURRENCIES = [
   { code: 'GBP', symbol: '£', name: 'British Pound' },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
 ];
 
 export default function SettingsScreen() {
@@ -30,7 +31,7 @@ export default function SettingsScreen() {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setCurrency(currencyCode as 'USD' | 'EUR' | 'GBP' | 'JPY' | 'AUD');
+    setCurrency(currencyCode as 'USD' | 'EUR' | 'GBP' | 'JPY' | 'AUD' | 'INR');
   };
 
   const handleResetOnboarding = async () => {

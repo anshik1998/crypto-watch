@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCryptoData } from './useCryptoData';
+import { useTheme } from './useTheme';
 import { fetchCryptoDetail, fetchPriceHistory, fetchOrderBook } from '@/utils/api';
 import { CryptoCurrency } from '@/context/CryptoDataContext';
 import { HYPERLIQUID_API_URL } from '@env';
@@ -18,10 +19,12 @@ interface PriceHistory {
   '1d': number[];
   '7d': number[];
   '30d': number[];
+  currency?: string;
 }
 
 export const useCryptoDetail = (id: string | undefined) => {
   const { cryptoData } = useCryptoData();
+  const { currency } = useTheme();
   const [crypto, setCrypto] = useState<CryptoCurrency | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +32,7 @@ export const useCryptoDetail = (id: string | undefined) => {
     '1d': [],
     '7d': [],
     '30d': [],
+    currency: currency.toLowerCase(),
   });
   const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
 
@@ -62,8 +66,8 @@ export const useCryptoDetail = (id: string | undefined) => {
           setCrypto(contextCrypto);
         } else {
           try {
-            // If not found in context, fetch it
-            const fetchedCrypto = await fetchCryptoDetail(id);
+            // If not found in context, fetch it with the current currency
+            const fetchedCrypto = await fetchCryptoDetail(id, currency.toLowerCase());
             setCrypto(fetchedCrypto);
           } catch (err: any) {
             console.error('Error fetching crypto details:', err);
@@ -77,9 +81,9 @@ export const useCryptoDetail = (id: string | undefined) => {
           }
         }
 
-        // Fetch price history
+        // Fetch price history with the current currency
         try {
-          const history = await fetchPriceHistory(id);
+          const history = await fetchPriceHistory(id, currency.toLowerCase());
           setPriceHistory(history);
         } catch (err) {
           console.error('Error fetching price history:', err);
@@ -247,7 +251,7 @@ export const useCryptoDetail = (id: string | undefined) => {
         wsConnection.close();
       }
     };
-  }, [id, cryptoData, crypto, fetchOrderBook]);
+  }, [id, cryptoData, crypto, currency]);
 
   return { crypto, loading, error, priceHistory, orderBook };
 };

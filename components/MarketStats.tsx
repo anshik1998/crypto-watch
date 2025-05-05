@@ -10,7 +10,7 @@ interface MarketStatsProps {
 }
 
 const MarketStats: React.FC<MarketStatsProps> = ({ marketStats }) => {
-  const { colors } = useTheme();
+  const { colors, currency } = useTheme();
 
   if (!marketStats) {
     return (
@@ -40,7 +40,7 @@ const MarketStats: React.FC<MarketStatsProps> = ({ marketStats }) => {
             </Text>
           </View>
           <Text style={[styles.statValue, { color: colors.text }]}>
-            ${formatLargeNumber(marketStats.total_market_cap)}
+            {formatLargeNumber(marketStats.total_market_cap, currency)}
           </Text>
           <Text style={[
             styles.statChange,
@@ -62,7 +62,7 @@ const MarketStats: React.FC<MarketStatsProps> = ({ marketStats }) => {
             </Text>
           </View>
           <Text style={[styles.statValue, { color: colors.text }]}>
-            ${formatLargeNumber(marketStats.total_volume)}
+            {formatLargeNumber(marketStats.total_volume, currency)}
           </Text>
         </View>
 

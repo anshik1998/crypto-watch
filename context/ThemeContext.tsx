@@ -1,9 +1,16 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage keys
+const STORAGE_KEYS = {
+  THEME: 'app_theme',
+  CURRENCY: 'app_currency',
+};
 
 // Define theme types
 export type ThemeType = 'light' | 'dark';
-export type CurrencyType = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'AUD';
+export type CurrencyType = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'AUD' | 'INR';
 
 // Color palette for both themes
 export interface ColorPalette {
@@ -28,12 +35,13 @@ interface ThemeContextType {
   colors: ColorPalette;
   currency: CurrencyType;
   setCurrency: (currency: CurrencyType) => void;
+  isLoading: boolean;
 }
 
 // Create the context
 export const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
-  toggleTheme: () => {},
+  toggleTheme: () => { },
   colors: {
     primary: '#5C67F5',
     primaryLight: 'rgba(92, 103, 245, 0.1)',
@@ -49,23 +57,63 @@ export const ThemeContext = createContext<ThemeContextType>({
     inputBackground: '#F3F4F6',
   },
   currency: 'USD',
-  setCurrency: () => {},
+  setCurrency: () => { },
+  isLoading: true,
 });
 
 // Theme provider component
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get the device color scheme
   const colorScheme = useColorScheme();
-  
-  // Initialize theme state based on device preference
+
+  // Initialize theme and currency state
   const [theme, setTheme] = useState<ThemeType>(colorScheme || 'light');
   const [currency, setCurrency] = useState<CurrencyType>('USD');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Update theme when device preference changes
+  // Load saved preferences on mount
   useEffect(() => {
-    if (colorScheme) {
-      setTheme(colorScheme as ThemeType);
-    }
+    const loadSavedPreferences = async () => {
+      try {
+        // Load saved theme
+        const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.THEME);
+        if (savedTheme) {
+          setTheme(savedTheme as ThemeType);
+        } else if (colorScheme) {
+          // If no saved theme, use device preference
+          setTheme(colorScheme as ThemeType);
+        }
+
+        // Load saved currency
+        const savedCurrency = await AsyncStorage.getItem(STORAGE_KEYS.CURRENCY);
+        if (savedCurrency) {
+          setCurrency(savedCurrency as CurrencyType);
+        }
+      } catch (error) {
+        console.error('Error loading saved preferences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSavedPreferences();
+  }, []);
+
+  // Update theme when device preference changes (only if no saved preference)
+  useEffect(() => {
+    const updateThemeBasedOnDevice = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.THEME);
+        // Only update based on device if user hasn't explicitly set a theme
+        if (!savedTheme && colorScheme) {
+          setTheme(colorScheme as ThemeType);
+        }
+      } catch (error) {
+        console.error('Error checking saved theme:', error);
+      }
+    };
+
+    updateThemeBasedOnDevice();
   }, [colorScheme]);
 
   // Define colors for both themes
@@ -104,7 +152,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Toggle theme function
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    // Save to AsyncStorage
+    AsyncStorage.setItem(STORAGE_KEYS.THEME, newTheme).catch(error => {
+      console.error('Error saving theme preference:', error);
+    });
+  };
+
+  // Currency setter with persistence
+  const handleSetCurrency = (newCurrency: CurrencyType) => {
+    setCurrency(newCurrency);
+    // Save to AsyncStorage
+    AsyncStorage.setItem(STORAGE_KEYS.CURRENCY, newCurrency).catch(error => {
+      console.error('Error saving currency preference:', error);
+    });
   };
 
   // Context value
@@ -113,7 +175,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     toggleTheme,
     colors,
     currency,
-    setCurrency,
+    setCurrency: handleSetCurrency,
+    isLoading,
   };
 
   return (
